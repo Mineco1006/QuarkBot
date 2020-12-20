@@ -8,8 +8,8 @@ import os
 config = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
 client = commands.Bot(command_prefix='-', intents=discord.Intents.all())
 
-auth = tweepy.OAuthHandler("clM3nhJHc2GeuFIQ1mWUuGFSa", "IbTqzO9CkBILtKJ0DPTtkFKpCUOb06ys3fe2vCWvyxSkTF7mtn")
-auth.set_access_token("1337413337286631426-t3mXEtBmW9310IDUCdXYGD68u65oV8", "mAUV3fcfImtPEWrlYRe22Q9kSwHkvRIODaRB5hDNNPxBR")
+auth = tweepy.OAuthHandler("", "")
+auth.set_access_token("", "")
 api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
 
 class streamListener(tweepy.StreamListener):
