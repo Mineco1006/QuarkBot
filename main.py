@@ -41,7 +41,7 @@ async def on_ready():
 
     tweet_listener = streamListener(discord=sendTweet, loop=asyncio.get_event_loop())
     stream = tweepy.Stream(api.auth, tweet_listener)
-    stream.filter(follow=['1337413337286631426'], is_async=True)
+    stream.filter(follow=[''], is_async=True)
 
 async def sendTweet(tweet_id):
     channel = await client.fetch_channel(config.get('CHANNELID', 'announcements'))
