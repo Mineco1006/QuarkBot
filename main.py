@@ -53,15 +53,15 @@ async def sendTweet(tweet_id):
     print(f'Tweet was successfully announced')
 
 async def status_task():
-    await client.change_presence(activity=discord.Game('HODLing QKC'), status=discord.Status.online)
+    await client.change_presence(activity=discord.Game(config.get('DISCORD','status'), status=discord.Status.online)
 
 @client.event
 async def on_member_join(member):
     channel_id = 787082086094864464
 
     embed = discord.Embed(
-        title='Welcome to the official QuarkChain Discord server!',
-        description='To verify go to #[{}](https://discord.gg/pUSXaYq9vN), read the rules and react to the bottom message.'.format(client.get_channel(channel_id)),
+        title=config.get('WELCOMEEMBED', 'title'),
+        description=config.get('WELCOMEEMBED', 'description'),
         color=discord.Colour.blue()
     )
 
