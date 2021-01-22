@@ -4,12 +4,16 @@ import configparser
 import asyncio
 from discord.ext import commands
 import os
+from datetime import datetime
+import logging
+
+logging.basicConfig(filename="bot.log", level=logging.INFO)
 
 config = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
 client = commands.Bot(command_prefix='-', intents=discord.Intents.all())
 
-auth = tweepy.OAuthHandler("", "")
-auth.set_access_token("", "")
+auth = tweepy.OAuthHandler("mine", "mine")
+auth.set_access_token("mine", "mine")
 api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
 
 class streamListener(tweepy.StreamListener):
@@ -20,19 +24,25 @@ class streamListener(tweepy.StreamListener):
         self.loop = loop
 
     def on_status(self, tweet):
-        print(f'Tweet from {tweet.user.name} detected')
-        self.send_message(tweet.id)
+        if tweet.user.id == 973766864659734528:
+            print(f'[{datetime.now()}]Tweet from {tweet.user.name} detected')
+            logging.info(f'[{datetime.now()}]Tweet from {tweet.user.name} detected')
+            self.send_message(tweet.id, tweet.user.name)
+        else:
+            print(f'[{datetime.now()}]Retweet/reply by user {tweet.user.name}')
+            logging.info(f'[{datetime.now()}]Retweet/reply by user {tweet.user.name}')
 
     def on_error(self, status):
-        print(f'Error {status} detected')
+        print(f'[{datetime.now()}][Tweepy]Error {status} detected')
 
-    def send_message(self, msg):
-        future = asyncio.run_coroutine_threadsafe(self.discord(msg), self.loop)
+    def send_message(self, msg, name):
+        future = asyncio.run_coroutine_threadsafe(self.discord(msg, name), self.loop)
         future.result()
 
 @client.event
 async def on_ready():
-    print('You have logged in as {0.user}'.format(client))
+    print(f'[{datetime.now()}]You have logged in as {client.user}')
+    logging.info(f'[{datetime.now()}]You have logged in as {client.user}')
     client.loop.create_task(status_task())
 
     for filename in os.listdir('./extensions'):
@@ -41,23 +51,22 @@ async def on_ready():
 
     tweet_listener = streamListener(discord=sendTweet, loop=asyncio.get_event_loop())
     stream = tweepy.Stream(api.auth, tweet_listener)
-    stream.filter(follow=[''], is_async=True)
+    stream.filter(follow=[str(config.get('TWITTER', 'account'))], is_async=True)
 
-async def sendTweet(tweet_id):
+async def sendTweet(tweet_id, tweet_name):
     channel = await client.fetch_channel(config.get('CHANNELID', 'announcements'))
     guild = await client.fetch_guild(config.get('GUILDID', 'main'))
-    url = f'https://twitter.com/twitter/statuses/{str(tweet_id)}'
-
+    url = f'https://twitter.com/{str(tweet_name)}/status/{str(tweet_id)}'
     await channel.send(f'{guild.default_role} check out our latest update:\n'
                        f'{url}')
-    print(f'Tweet was successfully announced')
+    print(f'[{datetime.now()}]Tweet was successfully announced')
+    logging.info(f'[{datetime.now()}]Tweet was successfully announced')
 
 async def status_task():
-    await client.change_presence(activity=discord.Game(config.get('DISCORD','status'), status=discord.Status.online)
+    await client.change_presence(activity=discord.Game('HODLing QKC'), status=discord.Status.online)
 
 @client.event
 async def on_member_join(member):
-    channel_id = 787082086094864464
 
     embed = discord.Embed(
         title=config.get('WELCOMEEMBED', 'title'),
@@ -66,33 +75,15 @@ async def on_member_join(member):
     )
 
     await member.send(embed=embed)
-    print('User {} joined our server'.format(member))
+    print(f'[{datetime.now()}]User {member} joined the server')
+    logging.info(f'[{datetime.now()}]User {member} joined the server')
 
-@client.command()
-async def addReaction(ctx, msgID: int, emoji):
-    msg = await ctx.fetch_message(msgID)
-    await msg.add_reaction(emoji)
-    print('{} added a reaction to message {} via the bot'.format(ctx.message.author, ctx.message))
-@client.command()
-async def reactionMessage(ctx, type):
-    channel = ctx.message.channel
-    guild = ctx.message.guild
-    if type == 'lang':
-        langembed = config['LANGEMBED']
-        langemb = discord.Embed(
-            title=langembed['title'],
-            description=langembed['description'],
-            colour=discord.Colour.blue()
-        )
-        await ctx.send(embed=langemb)
-    elif type == 'verify':
-        verifyembed = config['VERIFYEMBED']
-        veremb = discord.Embed(
-            title=verifyembed['title'],
-            colour=discord.Colour.blue()
-        )
-        await ctx.send(embed=veremb)
+@client.event
+async def on_member_remove(member):
+    print(f'[{datetime.now()}]User {member} left the server')
+    logging.info(f'[{datetime.now()}]User {member} left the server')
+
 
 
 config.read('config.ini')
-client.run(config.get('DISCORD','bottoken'))
+client.run(config.get('DISCORD', 'bottoken'))
